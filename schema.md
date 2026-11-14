@@ -906,7 +906,7 @@ Discussion and replies on announcements and meetings.
 | announcementId | string or null | UUID of the announcement (if commenting on an announcement) |
 | meetingId | string or null | UUID of the meeting (if commenting on a meeting) |
 | content | string | 1 to 1000 characters, trimmed |
-| parentCommentId | string or null | UUID of the top-level comment this replies to, `null` for top-level comments |
+| parentCommentId | string or null | UUID of parent comment if replying (must be a top-level comment), `null` for top-level comments |
 | createdBy | object | `{ id, name }`. **Set by server** from the token |
 | createdAt | string | ISO 8601 timestamp |
 | updatedAt | string or null | ISO 8601 timestamp, `null` until edited |
@@ -1004,14 +1004,14 @@ Input (reply to an existing comment):
 
 Rules:
 1. `content`: required, string, 1 to 1000 characters, trimmed.
-2. `parentCommentId`: optional string or `null`. If provided, must be the id of an existing **top-level** comment on the same announcement. Replying to a reply returns `400 VALIDATION_ERROR`.
+2. `parentCommentId`: optional string or `null`. If provided, it must be the id of an existing **top-level** comment (`parentCommentId === null`) on the same announcement. Replying to a reply is not allowed (strict 1-level reply nesting).
 3. The parent announcement must exist.
 4. Any authenticated user can comment.
 
 Output `201`: the created **Comment**.
 
 Errors:
-- `400 VALIDATION_ERROR`: content missing, empty, or exceeds 1000 characters, or `parentCommentId` points to a reply.
+- `400 VALIDATION_ERROR`: content missing, empty, exceeds 1000 characters, or attempting to reply to a reply (depth limit exceeded).
 - `401 UNAUTHENTICATED`: missing or invalid token.
 - `404 NOT_FOUND`: announcement or `parentCommentId` does not exist.
 
@@ -1051,7 +1051,8 @@ Delete a comment. Authors can delete their own comments; OBs can delete any comm
 
 No input. Output `204` (empty).
 
-*Delete rule:* this is a **hard delete**. The comment is removed permanently. Deleting a top-level comment also permanently deletes all of its replies. Deleting a reply removes only that reply.
+*Cascade rule:* Permanently hard deletes the comment. Deleting a top-level comment permanently cascade-deletes all its child replies.
+
 
 Errors:
 - `403 FORBIDDEN`: caller is neither an OB nor the creator of this comment.
