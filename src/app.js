@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import { inject } from "@vercel/analytics";
 import healthCheckRouter from "./routes/healthcheck.routes.js";
 import authRouter from "./routes/auth.routes.js";
 import userRouter from "./routes/user.routes.js";
@@ -10,6 +11,9 @@ import meetingRouter from "./routes/meeting.routes.js";
 import tentativeMeetingRouter from "./routes/tentativeMeeting.routes.js";
 import announcementRouter from "./routes/announcement.routes.js";
 import commentRouter from "./routes/comment.routes.js";
+
+// Initialize Vercel Web Analytics
+inject();
 
 const app = express();
 
